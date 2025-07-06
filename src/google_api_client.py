@@ -159,7 +159,7 @@ def _handle_streaming_response(resp) -> StreamingResponse:
                 for chunk in resp.iter_lines():
                     if chunk:
                         if not isinstance(chunk, str):
-                            chunk = chunk.decode('utf-8')
+                            chunk = chunk.decode('utf-8', "ignore")
                             
                         if chunk.startswith('data: '):
                             chunk = chunk[len('data: '):]
@@ -171,11 +171,11 @@ def _handle_streaming_response(resp) -> StreamingResponse:
                                     response_chunk = obj["response"]
                                     response_json = json.dumps(response_chunk, separators=(',', ':'))
                                     response_line = f"data: {response_json}\n\n"
-                                    yield response_line.encode('utf-8')
+                                    yield response_line.encode('utf-8', "ignore")
                                     await asyncio.sleep(0)
                                 else:
                                     obj_json = json.dumps(obj, separators=(',', ':'))
-                                    yield f"data: {obj_json}\n\n".encode('utf-8')
+                                    yield f"data: {obj_json}\n\n".encode('utf-8', "ignore")
                             except json.JSONDecodeError:
                                 continue
                 
@@ -188,7 +188,7 @@ def _handle_streaming_response(resp) -> StreamingResponse:
                     "code": 502
                 }
             }
-            yield f'data: {json.dumps(error_response)}\n\n'.encode('utf-8')
+            yield f'data: {json.dumps(error_response)}\n\n'.encode('utf-8', "ignore")
         except Exception as e:
             logging.error(f"Unexpected error during streaming: {str(e)}")
             error_response = {
@@ -198,7 +198,7 @@ def _handle_streaming_response(resp) -> StreamingResponse:
                     "code": 500
                 }
             }
-            yield f'data: {json.dumps(error_response)}\n\n'.encode('utf-8')
+            yield f'data: {json.dumps(error_response)}\n\n'.encode('utf-8', "ignore")
 
     response_headers = {
         "Content-Type": "text/event-stream",
@@ -310,6 +310,8 @@ def build_gemini_payload_from_native(native_request: dict, model_from_path: str)
     
     if "generationConfig" not in native_request:
         native_request["generationConfig"] = {}
+        
+    # native_request["enableEnhancedCivicAnswers"] = False
     
     if "thinkingConfig" not in native_request["generationConfig"]:
         native_request["generationConfig"]["thinkingConfig"] = {}
